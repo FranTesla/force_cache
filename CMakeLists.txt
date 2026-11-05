@@ -4,33 +4,28 @@ project(version_proxy CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Automatically download and integrate MinHook from GitHub during build time
+# Download the official precompiled MinHook v1.3.4 release package directly
 include(FetchContent)
 FetchContent_Declare(
     minhook
-    GIT_REPOSITORY https://github.com/TsudaKageyu/minhook.git
-    GIT_TAG v1.3.3
+    URL https://github.com/TsudaKageyu/minhook/releases/download/v1.3.4/MinHook_134_lib.zip
 )
 FetchContent_MakeAvailable(minhook)
 
-# Fix MinHook's default postfixes so it generates standard 'minhook.lib'
+# Define an imported static library target pointing to the extracted release files
+add_library(minhook STATIC IMPORTED)
 set_target_properties(minhook PROPERTIES
-    RELEASE_POSTFIX ""
-    DEBUG_POSTFIX ""
-    RELWITHDEBINFO_POSTFIX ""
-    MINSIZEREL_POSTFIX ""
+    IMPORTED_LOCATION "${minhook_SOURCE_DIR}/lib/libMinHook.x64.lib"
+    INTERFACE_INCLUDE_DIRECTORIES "${minhook_SOURCE_DIR}/include"
 )
 
-# Create your proxy DLL target using only your local source files
+# Create your proxy DLL target
 add_library(version SHARED
     src/dllmain.cpp
     version.def
 )
 
-# Expose MinHook's public include directory to your target
-target_include_directories(version PRIVATE ${minhook_SOURCE_DIR}/include)
-
-# Link against the fetched MinHook library target
+# Link against the prebuilt MinHook library
 target_link_libraries(version PRIVATE minhook)
 
 # Ensure the output filename is strictly 'version.dll'
