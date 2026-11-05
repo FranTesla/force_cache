@@ -13,6 +13,14 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(minhook)
 
+# Fix MinHook's default postfixes so it generates standard 'minhook.lib'
+set_target_properties(minhook PROPERTIES
+    RELEASE_POSTFIX ""
+    DEBUG_POSTFIX ""
+    RELWITHDEBINFO_POSTFIX ""
+    MINSIZEREL_POSTFIX ""
+)
+
 # Create your proxy DLL target using only your local source files
 add_library(version SHARED
     src/dllmain.cpp
