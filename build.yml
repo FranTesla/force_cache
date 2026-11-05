@@ -1,0 +1,43 @@
+name: Build Proxy DLL
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Set up MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Download and Extract MinHook
+      run: |
+        Invoke-WebRequest -Uri "https://github.com/TsudaKageyu/minhook/releases/download/v1.3.3/minhook_1.3.3_lib.zip" -OutFile "minhook.zip"
+        Expand-Archive -Path "minhook.zip" -DestinationPath "minhook"
+
+    - name: Compile DLL with MSVC
+      shell: cmd
+      run: |
+        REM Initialize MSVC x64 environment variables
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+        if %errorlevel% neq 0 (
+            call "C:\Program Files\Microsoft Visual Studio\2022\Professional\VC\Auxiliary\Build\vcvarsall.bat" x64
+        )
+        if %errorlevel% neq 0 (
+            call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvarsall.bat" x64
+        )
+
+        REM Compile dllmain.cpp into version.dll linking against MinHook
+        cl.exe /O2 /LD dllmain.cpp /I"minhook\include" /link /libpath:"minhook\lib\libMinHook.x64.lib" version.def /OUT:version.dll
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: version-dll-x64
+        path: version.dll
