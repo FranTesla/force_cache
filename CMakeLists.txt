@@ -18,7 +18,10 @@ add_library(version SHARED
     version.def
 )
 
-# Link MinHook automatically (MinHook's CMake target is named 'minhook')
+# Explicitly point to MinHook's include directory so the compiler can find MinHook.h
+target_include_directories(version PRIVATE ${minhook_SOURCE_DIR}/include)
+
+# Link MinHook library target
 target_link_libraries(version PRIVATE minhook)
 
 # Ensure the output filename is strictly 'version.dll'
