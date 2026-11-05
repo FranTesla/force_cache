@@ -1,19 +1,8 @@
 LIBRARY version
 EXPORTS
-    GetFileVersionInfoA=@GetFileVersionInfoA
-    GetFileVersionInfoByHandle=@GetFileVersionInfoByHandle
-    GetFileVersionInfoExA=@GetFileVersionInfoExA
-    GetFileVersionInfoExW=@GetFileVersionInfoExW
-    GetFileVersionInfoSizeA=@GetFileVersionInfoSizeA
-    GetFileVersionInfoSizeExA=@GetFileVersionInfoSizeExA
-    GetFileVersionInfoSizeExW=@GetFileVersionInfoSizeExW
-    GetFileVersionInfoSizeW=@GetFileVersionInfoSizeW
-    GetFileVersionInfoW=@GetFileVersionInfoW
-    VerFindFileA=@VerFindFileA
-    VerFindFileW=@VerFindFileW
-    VerInstallFileA=@VerInstallFileA
-    VerInstallFileW=@VerInstallFileW
-    VerLanguageNameA=@VerLanguageNameA
-    VerLanguageNameW=@VerLanguageNameW
-    VerQueryValueA=@VerQueryValueA
-    VerQueryValueW=@VerQueryValueW
+    GetFileVersionInfoA=GetFileVersionInfoA_Proxy
+    GetFileVersionInfoW=GetFileVersionInfoW_Proxy
+    GetFileVersionInfoSizeA=GetFileVersionInfoSizeA_Proxy
+    GetFileVersionInfoSizeW=GetFileVersionInfoSizeW_Proxy
+    VerQueryValueA=VerQueryValueA_Proxy
+    VerQueryValueW=VerQueryValueW_Proxy
