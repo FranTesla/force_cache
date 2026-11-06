@@ -53,8 +53,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
     return TRUE;
 }
 
-extern "C" {
-    HANDLE APIENTRY __declspec(dllexport) CreateFileW_Proxy(
+extern "C" __declspec(dllexport) {
+    HANDLE WINAPI CreateFileW_Proxy(
         LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
         LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition,
         DWORD dwFlagsAndAttributes, HANDLE hTemplateFile
