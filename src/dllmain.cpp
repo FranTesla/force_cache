@@ -53,17 +53,15 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
     return TRUE;
 }
 
-extern "C" __declspec(dllexport) {
-    HANDLE WINAPI CreateFileW_Proxy(
-        LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
-        LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition,
-        DWORD dwFlagsAndAttributes, HANDLE hTemplateFile
-    ) {
-        if (fpCreateFileW_original) {
-            return fpCreateFileW_original(lpFileName, dwDesiredAccess, dwShareMode,
-                                          lpSecurityAttributes, dwCreationDisposition,
-                                          dwFlagsAndAttributes, hTemplateFile);
-        }
-        return INVALID_HANDLE_VALUE;
+extern "C" __declspec(dllexport) HANDLE WINAPI CreateFileW_Proxy(
+    LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
+    LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition,
+    DWORD dwFlagsAndAttributes, HANDLE hTemplateFile
+) {
+    if (fpCreateFileW_original) {
+        return fpCreateFileW_original(lpFileName, dwDesiredAccess, dwShareMode,
+                                      lpSecurityAttributes, dwCreationDisposition,
+                                      dwFlagsAndAttributes, hTemplateFile);
     }
+    return INVALID_HANDLE_VALUE;
 }
