@@ -6,16 +6,6 @@
 // Handle to the original system version.dll
 HMODULE hSystemVersionDll = NULL;
 
-// Define function pointer types for the functions we are proxying
-extern "C" {
-    typedef BOOL(APIENTRY* GetFileVersionInfoA_t)(LPCSTR, DWORD, DWORD, LPVOID);
-    typedef BOOL(APIENTRY* GetFileVersionInfoW_t)(LPCWSTR, DWORD, DWORD, LPVOID);
-    typedef DWORD(APIENTRY* GetFileVersionInfoSizeA_t)(LPCSTR, LPDWORD);
-    typedef DWORD(APIENTRY* GetFileVersionInfoSizeW_t)(LPCWSTR, LPDWORD);
-    typedef BOOL(APIENTRY* VerQueryValueA_t)(LPCVOID, LPCSTR, LPVOID*, PUINT);
-    typedef BOOL(APIENTRY* VerQueryValueW_t)(LPCVOID, LPCWSTR, LPVOID*, PUINT);
-}
-
 // Function pointers to the real system functions
 GetFileVersionInfoA_t pGetFileVersionInfoA = NULL;
 GetFileVersionInfoW_t pGetFileVersionInfoW = NULL;
@@ -41,6 +31,7 @@ HANDLE WINAPI Hooked_CreateFileW(
     return fpCreateFileW(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 }
 
+// Convert wide string to multi-byte string
 std::string ConvertWideToMultiByte(const std::wstring& wideStr) {
     int size_needed = WideCharToMultiByte(CP_UTF8, 0, &wideStr[0], (int)wideStr.size(), NULL, 0, NULL, NULL);
     std::string strTo(size_needed, 0);
@@ -48,6 +39,7 @@ std::string ConvertWideToMultiByte(const std::wstring& wideStr) {
     return strTo;
 }
 
+// Initialize proxy and hooks
 void InitializeProxyAndHooks() {
     wchar_t sysPath[MAX_PATH];
     GetSystemDirectoryW(sysPath, MAX_PATH);
@@ -97,6 +89,7 @@ void InitializeProxyAndHooks() {
     }
 }
 
+// Unload proxy and hooks
 void UnloadProxyAndHooks() {
     MH_DisableHook(&CreateFileW);
     MH_Uninitialize();
@@ -106,6 +99,7 @@ void UnloadProxyAndHooks() {
     }
 }
 
+// DLL Entry Point
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
     switch (ul_reason_for_call) {
     case DLL_PROCESS_ATTACH:
@@ -122,32 +116,26 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 // Proxied Exports Implementation
 extern "C" {
     BOOL APIENTRY GetFileVersionInfoA_Proxy(LPCSTR lptstrFilename, DWORD dwHandle, DWORD dwLen, LPVOID lpData) {
-        if (pGetFileVersionInfoA) return pGetFileVersionInfoA(lptstrFilename, dwHandle, dwLen, lpData);
-        return FALSE;
+        return pGetFileVersionInfoA ? pGetFileVersionInfoA(lptstrFilename, dwHandle, dwLen, lpData) : FALSE;
     }
 
     BOOL APIENTRY GetFileVersionInfoW_Proxy(LPCWSTR lptstrFilename, DWORD dwHandle, DWORD dwLen, LPVOID lpData) {
-        if (pGetFileVersionInfoW) return pGetFileVersionInfoW(lptstrFilename, dwHandle, dwLen, lpData);
-        return FALSE;
+        return pGetFileVersionInfoW ? pGetFileVersionInfoW(lptstrFilename, dwHandle, dwLen, lpData) : FALSE;
     }
 
     DWORD APIENTRY GetFileVersionInfoSizeA_Proxy(LPCSTR lptstrFilename, LPDWORD lpdwHandle) {
-        if (pGetFileVersionInfoSizeA) return pGetFileVersionInfoSizeA(lptstrFilename, lpdwHandle);
-        return 0;
+        return pGetFileVersionInfoSizeA ? pGetFileVersionInfoSizeA(lptstrFilename, lpdwHandle) : 0;
     }
 
     DWORD APIENTRY GetFileVersionInfoSizeW_Proxy(LPCWSTR lptstrFilename, LPDWORD lpdwHandle) {
-        if (pGetFileVersionInfoSizeW) return pGetFileVersionInfoSizeW(lptstrFilename, lpdwHandle);
-        return 0;
+        return pGetFileVersionInfoSizeW ? pGetFileVersionInfoSizeW(lptstrFilename, lpdwHandle) : 0;
     }
 
     BOOL APIENTRY VerQueryValueA_Proxy(LPCVOID pBlock, LPCSTR lpSubBlock, LPVOID* lplpBuffer, PUINT puLen) {
-        if (pVerQueryValueA) return pVerQueryValueA(pBlock, lpSubBlock, lplpBuffer, puLen);
-        return FALSE;
+        return pVerQueryValueA ? pVerQueryValueA(pBlock, lpSubBlock, lplpBuffer, puLen) : FALSE;
     }
 
     BOOL APIENTRY VerQueryValueW_Proxy(LPCVOID pBlock, LPCWSTR lpSubBlock, LPVOID* lplpBuffer, PUINT puLen) {
-        if (pVerQueryValueW) return pVerQueryValueW(pBlock, lpSubBlock, lplpBuffer, puLen);
-        return FALSE;
+        return pVerQueryValueW ? pVerQueryValueW(pBlock, lpSubBlock, lplpBuffer, puLen) : FALSE;
     }
 }
