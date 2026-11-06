@@ -6,6 +6,14 @@
 // Handle to the original system version.dll
 HMODULE hSystemVersionDll = NULL;
 
+// Function pointer types for the functions we are proxying
+typedef BOOL(APIENTRY* GetFileVersionInfoA_t)(LPCSTR, DWORD, DWORD, LPVOID);
+typedef BOOL(APIENTRY* GetFileVersionInfoW_t)(LPCWSTR, DWORD, DWORD, LPVOID);
+typedef DWORD(APIENTRY* GetFileVersionInfoSizeA_t)(LPCSTR, LPDWORD);
+typedef DWORD(APIENTRY* GetFileVersionInfoSizeW_t)(LPCWSTR, LPDWORD);
+typedef BOOL(APIENTRY* VerQueryValueA_t)(LPCVOID, LPCSTR, LPVOID*, PUINT);
+typedef BOOL(APIENTRY* VerQueryValueW_t)(LPCVOID, LPCWSTR, LPVOID*, PUINT);
+
 // Function pointers to the real system functions
 GetFileVersionInfoA_t pGetFileVersionInfoA = NULL;
 GetFileVersionInfoW_t pGetFileVersionInfoW = NULL;
@@ -18,6 +26,7 @@ VerQueryValueW_t pVerQueryValueW = NULL;
 typedef HANDLE(WINAPI* CreateFileW_t)(LPCWSTR, DWORD, DWORD, LPSECURITY_ATTRIBUTES, DWORD, DWORD, HANDLE);
 CreateFileW_t fpCreateFileW = NULL;
 
+// Hooked function
 HANDLE WINAPI Hooked_CreateFileW(
     LPCWSTR lpFileName,
     DWORD dwDesiredAccess,
@@ -42,7 +51,10 @@ std::string ConvertWideToMultiByte(const std::wstring& wideStr) {
 // Initialize proxy and hooks
 void InitializeProxyAndHooks() {
     wchar_t sysPath[MAX_PATH];
-    GetSystemDirectoryW(sysPath, MAX_PATH);
+    if (!GetSystemDirectoryW(sysPath, MAX_PATH)) {
+        OutputDebugStringA(ConvertWideToMultiByte(L"Failed to get system directory\n").c_str());
+        return;
+    }
     wcscat_s(sysPath, L"\\version.dll");
 
     hSystemVersionDll = LoadLibraryExW(sysPath, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
@@ -58,7 +70,7 @@ void InitializeProxyAndHooks() {
     pVerQueryValueA = (VerQueryValueA_t)GetProcAddress(hSystemVersionDll, "VerQueryValueA");
     pVerQueryValueW = (VerQueryValueW_t)GetProcAddress(hSystemVersionDll, "VerQueryValueW");
 
-    if (!pGetFileVersionInfoW || !pGetFileVersionInfoSizeW || !pVerQueryValueW) {
+    if (!pGetFileVersionInfoA || !pGetFileVersionInfoW || !pGetFileVersionInfoSizeA || !pGetFileVersionInfoSizeW || !pVerQueryValueA || !pVerQueryValueW) {
         OutputDebugStringA(ConvertWideToMultiByte(L"Failed to get essential function addresses from version.dll\n").c_str());
         FreeLibrary(hSystemVersionDll);
         hSystemVersionDll = NULL;
@@ -116,26 +128,32 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 // Proxied Exports Implementation
 extern "C" {
     BOOL APIENTRY GetFileVersionInfoA_Proxy(LPCSTR lptstrFilename, DWORD dwHandle, DWORD dwLen, LPVOID lpData) {
-        return pGetFileVersionInfoA ? pGetFileVersionInfoA(lptstrFilename, dwHandle, dwLen, lpData) : FALSE;
+        if (pGetFileVersionInfoA) return pGetFileVersionInfoA(lptstrFilename, dwHandle, dwLen, lpData);
+        return FALSE;
     }
 
     BOOL APIENTRY GetFileVersionInfoW_Proxy(LPCWSTR lptstrFilename, DWORD dwHandle, DWORD dwLen, LPVOID lpData) {
-        return pGetFileVersionInfoW ? pGetFileVersionInfoW(lptstrFilename, dwHandle, dwLen, lpData) : FALSE;
+        if (pGetFileVersionInfoW) return pGetFileVersionInfoW(lptstrFilename, dwHandle, dwLen, lpData);
+        return FALSE;
     }
 
     DWORD APIENTRY GetFileVersionInfoSizeA_Proxy(LPCSTR lptstrFilename, LPDWORD lpdwHandle) {
-        return pGetFileVersionInfoSizeA ? pGetFileVersionInfoSizeA(lptstrFilename, lpdwHandle) : 0;
+        if (pGetFileVersionInfoSizeA) return pGetFileVersionInfoSizeA(lptstrFilename, lpdwHandle);
+        return 0;
     }
 
     DWORD APIENTRY GetFileVersionInfoSizeW_Proxy(LPCWSTR lptstrFilename, LPDWORD lpdwHandle) {
-        return pGetFileVersionInfoSizeW ? pGetFileVersionInfoSizeW(lptstrFilename, lpdwHandle) : 0;
+        if (pGetFileVersionInfoSizeW) return pGetFileVersionInfoSizeW(lptstrFilename, lpdwHandle);
+        return 0;
     }
 
     BOOL APIENTRY VerQueryValueA_Proxy(LPCVOID pBlock, LPCSTR lpSubBlock, LPVOID* lplpBuffer, PUINT puLen) {
-        return pVerQueryValueA ? pVerQueryValueA(pBlock, lpSubBlock, lplpBuffer, puLen) : FALSE;
+        if (pVerQueryValueA) return pVerQueryValueA(pBlock, lpSubBlock, lplpBuffer, puLen);
+        return FALSE;
     }
 
     BOOL APIENTRY VerQueryValueW_Proxy(LPCVOID pBlock, LPCWSTR lpSubBlock, LPVOID* lplpBuffer, PUINT puLen) {
-        return pVerQueryValueW ? pVerQueryValueW(pBlock, lpSubBlock, lplpBuffer, puLen) : FALSE;
+        if (pVerQueryValueW) return pVerQueryValueW(pBlock, lpSubBlock, lplpBuffer, puLen);
+        return FALSE;
     }
 }
