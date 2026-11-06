@@ -10,6 +10,16 @@ HANDLE WINAPI Hooked_CreateFileW(
     LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition,
     DWORD dwFlagsAndAttributes, HANDLE hTemplateFile
 ) {
+    DWORD dwOriginalFlags = dwFlagsAndAttributes;
+
+    // Only modify flags for READ operations
+    if ((dwDesiredAccess & GENERIC_WRITE) == 0 && (dwDesiredAccess & GENERIC_READ) != 0) {
+        // Force cache for read operations - remove any bypass/cacheless flags
+        if (dwFlagsAndAttributes & FILE_FLAG_NO_BUFFERING) {
+            dwFlagsAndAttributes &= ~FILE_FLAG_NO_BUFFERING;
+        }
+    }
+
     return fpCreateFileW_original(lpFileName, dwDesiredAccess, dwShareMode,
                                   lpSecurityAttributes, dwCreationDisposition,
                                   dwFlagsAndAttributes, hTemplateFile);
